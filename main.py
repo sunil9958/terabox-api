@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
+CORS(app)
 
 API_URL = "https://hex.teraboxfast2.workers.dev/"
 HEADERS = {
@@ -17,7 +19,7 @@ def home():
 @app.route("/get_terabox_links", methods=["GET"])
 def get_terabox_links():
     url = request.args.get("url")
-    key = "C7mAq"  # Change key if needed
+    key = "C7mAq"
 
     if not url:
         return jsonify({"status": "error", "message": "URL required"}), 400
