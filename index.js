@@ -71,7 +71,7 @@ const server = http.createServer(async (req, res) => {
         const result = await getHTML(finalLink);
 
         // Extract jsToken
-        const jsToken = result.html.match(/jsToken.*?\"(.*?)\"/);
+        const jsToken = result.html.match(/jsToken.*?:.*?'(.*?)'/);
 
         // Extract shorturl
         const shorturl = finalLink.match(/surl=(.*)/);
