@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: terabox-api
+    env: php
+    plan: free
