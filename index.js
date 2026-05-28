@@ -1,14 +1,28 @@
 const http = require("http");
+const url = require("url");
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
+
+    const query = url.parse(req.url, true).query;
+
+    const teraboxLink = query.url;
 
     res.writeHead(200, {
         "Content-Type": "application/json"
     });
 
-    res.end(JSON.stringify({
+    if (!teraboxLink) {
+        return res.end(JSON.stringify({
+            status: false,
+            message: "Provide Terabox URL"
+        }));
+    }
+
+    // Temporary demo response
+    return res.end(JSON.stringify({
         status: true,
-        message: "TeraBox API Running Successfully"
+        received_url: teraboxLink,
+        message: "Terabox link received successfully"
     }));
 
 });
