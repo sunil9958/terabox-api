@@ -70,11 +70,18 @@ const server = http.createServer(async (req, res) => {
         // Second Request
         const result = await getHTML(finalLink);
 
+        // Extract jsToken
+        const jsToken = result.html.match(/jsToken.*?\"(.*?)\"/);
+
+        // Extract shorturl
+        const shorturl = finalLink.match(/surl=(.*)/);
+
         return res.end(JSON.stringify({
             status: true,
             final_link: finalLink,
-            html_length: result.html.length,
-            preview: result.html.substring(0, 500)
+            shorturl: shorturl ? shorturl[1] : null,
+            jsToken: jsToken ? jsToken[1] : null,
+            html_length: result.html.length
         }));
 
     } catch (error) {
