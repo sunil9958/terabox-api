@@ -61,14 +61,20 @@ const server = http.createServer(async (req, res) => {
 
     try {
 
-        const result = await getHTML(teraboxLink);
+        // First Request
+        const first = await getHTML(teraboxLink);
+
+        // Redirect URL
+        const finalLink = first.headers.location || teraboxLink;
+
+        // Second Request
+        const result = await getHTML(finalLink);
 
         return res.end(JSON.stringify({
             status: true,
-            input: teraboxLink,
+            final_link: finalLink,
             html_length: result.html.length,
-            status_code: result.statusCode,
-            final_url: result.headers.location || "No Redirect"
+            preview: result.html.substring(0, 500)
         }));
 
     } catch (error) {
