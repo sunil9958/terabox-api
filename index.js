@@ -6,11 +6,15 @@ function getHTML(link) {
 
     return new Promise((resolve, reject) => {
 
-        https.get(link, {
+        const options = {
             headers: {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "text/html,application/xhtml+xml",
+                "Referer": "https://www.terabox.com/"
             }
-        }, (res) => {
+        };
+
+        https.get(link, options, (res) => {
 
             let data = "";
 
@@ -19,7 +23,13 @@ function getHTML(link) {
             });
 
             res.on("end", () => {
-                resolve(data);
+
+                resolve({
+                    html: data,
+                    statusCode: res.statusCode,
+                    headers: res.headers
+                });
+
             });
 
         }).on("error", err => {
@@ -51,16 +61,14 @@ const server = http.createServer(async (req, res) => {
 
     try {
 
-        const html = await getHTML(teraboxLink);
-
-        // Simple token extract demo
-        const shortUrlMatch = html.match(/shorturl=(.*?)&/);
+        const result = await getHTML(teraboxLink);
 
         return res.end(JSON.stringify({
             status: true,
             input: teraboxLink,
-            html_length: html.length,
-            shorturl_found: shortUrlMatch ? shortUrlMatch[1] : null
+            html_length: result.html.length,
+            status_code: result.statusCode,
+            final_url: result.headers.location || "No Redirect"
         }));
 
     } catch (error) {
