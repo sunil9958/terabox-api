@@ -4,6 +4,7 @@ const https = require("https");
 
 function getHTML(link) {
     return new Promise((resolve, reject) => {
+
         https.get(link, {
             headers: {
                 "User-Agent": "Mozilla/5.0"
@@ -12,7 +13,9 @@ function getHTML(link) {
 
             let data = "";
 
-            res.on("data", chunk => data += chunk);
+            res.on("data", chunk => {
+                data += chunk;
+            });
 
             res.on("end", () => {
                 resolve({
@@ -22,6 +25,7 @@ function getHTML(link) {
             });
 
         }).on("error", reject);
+
     });
 }
 
@@ -47,17 +51,25 @@ const server = http.createServer(async (req, res) => {
 
         const html = second.html;
 
-        const pcfMatch =
+        const pcf =
             html.match(/"pcftoken":"([^"]+)"/);
 
-        const tokenMatch =
+        const shareid =
+            html.match(/"shareid":([0-9]+)/);
+
+        const uk =
+            html.match(/"uk":([0-9]+)/);
+
+        const jsToken =
             html.match(/window\.jsToken\s*=\s*"([^"]+)"/);
 
         res.end(JSON.stringify({
             status: true,
             final_link: finalLink,
-            pcftoken: pcfMatch ? pcfMatch[1] : null,
-            jsToken: tokenMatch ? tokenMatch[1] : null,
+            pcftoken: pcf ? pcf[1] : null,
+            shareid: shareid ? shareid[1] : null,
+            uk: uk ? uk[1] : null,
+            jsToken: jsToken ? jsToken[1] : null,
             html_length: html.length
         }));
 
