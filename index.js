@@ -4,22 +4,15 @@ const https = require("https");
 
 function getHTML(link) {
     return new Promise((resolve, reject) => {
-
-        const options = {
+        https.get(link, {
             headers: {
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "text/html,application/xhtml+xml",
-                "Referer": "https://www.terabox.com/"
+                "User-Agent": "Mozilla/5.0"
             }
-        };
-
-        https.get(link, options, (res) => {
+        }, (res) => {
 
             let data = "";
 
-            res.on("data", chunk => {
-                data += chunk;
-            });
+            res.on("data", chunk => data += chunk);
 
             res.on("end", () => {
                 resolve({
@@ -28,58 +21,55 @@ function getHTML(link) {
                 });
             });
 
-        }).on("error", err => {
-            reject(err);
-        });
-
+        }).on("error", reject);
     });
 }
 
 const server = http.createServer(async (req, res) => {
 
     const query = url.parse(req.url, true).query;
-    const teraboxLink = query.url;
 
-    res.writeHead(200, {
-        "Content-Type": "application/json"
-    });
-
-    if (!teraboxLink) {
+    if (!query.url) {
         return res.end(JSON.stringify({
             status: false,
-            message: "Provide Terabox URL"
+            message: "Provide URL"
         }));
     }
 
     try {
 
-        const first = await getHTML(teraboxLink);
+        const first = await getHTML(query.url);
 
         const finalLink =
-            first.headers.location ||
-            teraboxLink;
+            first.headers.location || query.url;
 
-        const result = await getHTML(finalLink);
+        const second = await getHTML(finalLink);
 
-        return res.end(JSON.stringify({
+        const html = second.html;
+
+        const pcfMatch =
+            html.match(/"pcftoken":"([^"]+)"/);
+
+        const tokenMatch =
+            html.match(/window\.jsToken\s*=\s*"([^"]+)"/);
+
+        res.end(JSON.stringify({
             status: true,
             final_link: finalLink,
-            html_sample: result.html.substring(0, 8000)
+            pcftoken: pcfMatch ? pcfMatch[1] : null,
+            jsToken: tokenMatch ? tokenMatch[1] : null,
+            html_length: html.length
         }));
 
-    } catch (error) {
+    } catch (e) {
 
-        return res.end(JSON.stringify({
+        res.end(JSON.stringify({
             status: false,
-            error: error.message
+            error: e.message
         }));
 
     }
 
 });
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
-});
+server.listen(process.env.PORT || 3000);
