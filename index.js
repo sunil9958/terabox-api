@@ -61,41 +61,10 @@ const server = http.createServer(async (req, res) => {
 
         const result = await getHTML(finalLink);
 
-        const shorturlMatch =
-            finalLink.match(/surl=([^&]+)/);
-
-        const shorturl =
-            shorturlMatch ?
-            shorturlMatch[1] :
-            null;
-
-        const jsTokenMatch =
-            result.html.match(
-                /window\.jsToken\s*=\s*"([^"]+)"/i
-            );
-
-        const jsToken =
-            jsTokenMatch ?
-            jsTokenMatch[1] :
-            null;
-
-        const shareIdMatch =
-            result.html.match(
-                /shareid[=:]"?(\d+)/i
-            );
-
-        const shareid =
-            shareIdMatch ?
-            shareIdMatch[1] :
-            null;
-
         return res.end(JSON.stringify({
             status: true,
             final_link: finalLink,
-            shorturl: shorturl,
-            shareid: shareid,
-            jsToken: jsToken,
-            html_length: result.html.length
+            html_sample: result.html.substring(0, 8000)
         }));
 
     } catch (error) {
