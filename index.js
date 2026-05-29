@@ -13,11 +13,16 @@ function getHTML(link) {
 
             let data = "";
 
+            console.log("Status Code:", response.statusCode);
+            console.log("Location:", response.headers.location);
+
             response.on("data", chunk => {
                 data += chunk;
             });
 
             response.on("end", () => {
+
+                console.log("HTML Length:", data.length);
 
                 const finalUrl =
                     response.headers.location || link;
@@ -29,7 +34,12 @@ function getHTML(link) {
 
             });
 
-        }).on("error", reject);
+        }).on("error", (err) => {
+
+            console.log("Request Error:", err.message);
+            reject(err);
+
+        });
 
     });
 }
@@ -44,6 +54,8 @@ const server = http.createServer(async (req, res) => {
         url.parse(req.url, true).query;
 
     const teraboxLink = query.url;
+
+    console.log("Request URL:", teraboxLink);
 
     if (!teraboxLink) {
         return res.end(JSON.stringify({
