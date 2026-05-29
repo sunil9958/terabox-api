@@ -9,19 +9,24 @@ function getHTML(link) {
             headers: {
                 "User-Agent": "Mozilla/5.0"
             }
-        }, (res) => {
+        }, (response) => {
 
             let data = "";
 
-            res.on("data", chunk => {
+            response.on("data", chunk => {
                 data += chunk;
             });
 
-            res.on("end", () => {
+            response.on("end", () => {
+
+                const finalUrl =
+                    response.headers.location || link;
+
                 resolve({
                     html: data,
-                    headers: res.headers
+                    finalUrl
                 });
+
             });
 
         }).on("error", reject);
@@ -31,57 +36,66 @@ function getHTML(link) {
 
 const server = http.createServer(async (req, res) => {
 
-    const query = url.parse(req.url, true).query;
+    res.writeHead(200, {
+        "Content-Type": "application/json"
+    });
 
-    if (!query.url) {
+    const query =
+        url.parse(req.url, true).query;
+
+    const teraboxLink = query.url;
+
+    if (!teraboxLink) {
         return res.end(JSON.stringify({
             status: false,
-            message: "Provide URL"
+            message: "Provide Terabox URL"
         }));
     }
 
     try {
 
-        const first = await getHTML(query.url);
+        const result =
+            await getHTML(teraboxLink);
 
-        const finalLink =
-            first.headers.location || query.url;
+        const html = result.html;
 
-        const second = await getHTML(finalLink);
-
-        const html = second.html;
-
-        const pcf =
-            html.match(/"pcftoken":"([^"]+)"/);
+        const pcftoken =
+            html.match(/"pcftoken":"([^"]+)"/i);
 
         const shareid =
-            html.match(/"shareid":([0-9]+)/);
+            html.match(/shareid[^0-9]*([0-9]+)/i);
 
         const uk =
-            html.match(/"uk":([0-9]+)/);
+            html.match(/uk[^0-9]*([0-9]+)/i);
 
         const jsToken =
-            html.match(/window\.jsToken\s*=\s*"([^"]+)"/);
+            html.match(/jsToken\s*=\s*"([^"]+)"/i);
 
-        res.end(JSON.stringify({
+        return res.end(JSON.stringify({
             status: true,
-            final_link: finalLink,
-            pcftoken: pcf ? pcf[1] : null,
+            final_link: result.finalUrl,
+            pcftoken: pcftoken ? pcftoken[1] : null,
             shareid: shareid ? shareid[1] : null,
             uk: uk ? uk[1] : null,
             jsToken: jsToken ? jsToken[1] : null,
+            shareid_raw: html.includes("shareid"),
+            uk_raw: html.includes("\"uk\""),
             html_length: html.length
         }));
 
-    } catch (e) {
+    } catch (error) {
 
-        res.end(JSON.stringify({
+        return res.end(JSON.stringify({
             status: false,
-            error: e.message
+            error: error.message
         }));
 
     }
 
 });
 
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});
