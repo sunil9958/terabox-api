@@ -60,33 +60,16 @@ const server = http.createServer(async (req, res) => {
 
     try {
 
-        // First Request
         const first = await getHTML(teraboxLink);
 
-        // Redirect URL
         const finalLink = first.headers.location || teraboxLink;
 
-        // Second Request
         const result = await getHTML(finalLink);
-
-        // Extract shorturl
-        const shorturl = finalLink.match(/surl=(.*)/);
-
-        // Extract page state
-        const scriptMatch = result.html.match(/window\\.__INITIAL_STATE__=(.*?);<\\/script>/);
-
-        let pageData = null;
-
-        if (scriptMatch) {
-            pageData = scriptMatch[1];
-        }
 
         return res.end(JSON.stringify({
             status: true,
             final_link: finalLink,
-            shorturl: shorturl ? shorturl[1] : null,
-            has_page_data: pageData ? true : false,
-            html_length: result.html.length
+            html_sample: result.html.substring(0, 5000)
         }));
 
     } catch (error) {
